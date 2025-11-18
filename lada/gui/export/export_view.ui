@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+SPDX-FileCopyrightText: Lada Authors
+SPDX-License-Identifier: AGPL-3.0
+-->
+
 <interface>
     <requires lib="gtk" version="4.0"/>
     <requires lib="Adw" version="1.0"/>
@@ -39,7 +45,7 @@
                             </object>
                         </child>
                         <child type="end">
-                            <object class="GtkButton" id="button_cancel_export">
+                            <object class="SpinnerButton" id="button_cancel_export">
                                 <property name="label" translatable="true">Cancel</property>
                                 <property name="visible">False</property>
                                 <signal name="clicked" handler="on_button_cancel_export_clicked"/>
@@ -49,14 +55,14 @@
                             </object>
                         </child>
                         <child type="end">
-                            <object class="GtkButton" id="button_pause_export">
+                            <object class="SpinnerButton" id="button_pause_export">
                                 <property name="label" translatable="true">Pause</property>
                                 <property name="visible">False</property>
                                 <signal name="clicked" handler="on_button_pause_export_clicked"/>
                             </object>
                         </child>
                         <child type="end">
-                            <object class="GtkButton" id="button_resume_export">
+                            <object class="SpinnerButton" id="button_resume_export">
                                 <property name="label" translatable="true">Resume</property>
                                 <property name="visible">False</property>
                                 <signal name="clicked" handler="on_button_resume_export_clicked"/>
@@ -113,7 +119,7 @@
                                             <object class="GtkStackPage">
                                                 <property name="name">single-file</property>
                                                 <property name="child">
-                                                    <object class="ExportSingleFileStatusPage" id="status_page"/>
+                                                    <object class="ExportSingleFileStatusPage" id="single_file_page"/>
                                                 </property>
                                             </object>
                                         </child>

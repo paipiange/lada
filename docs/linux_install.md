@@ -9,7 +9,7 @@ This section describes how to install the app (CLI and GUI) from source.
 
 1) Get the code
    ```bash
-   git clone https://github.com/ladaapp/lada.git
+   git clone https://codeberg.org/ladaapp/lada.git
    cd lada
    ```
 
@@ -48,27 +48,27 @@ This section describes how to install the app (CLI and GUI) from source.
    
    On low-end hardware running mosaic detection model could run into a timeout defined in ultralytics library and the scene would not be restored. The following patch increases this time limit:
     ```bash
-    patch -u .venv/lib/python3.1[23]/site-packages/ultralytics/utils/nms.py patches/increase_mms_time_limit.patch
+    patch -u -p1 -d .venv/lib/python3.1[23]/site-packages < patches/increase_mms_time_limit.patch
     ```
    
    Disable crash-reporting / telemetry of one of our dependencies (ultralytics):
    ```bash
-   patch -u .venv/lib/python3.1[23]/site-packages/ultralytics/utils/__init__.py  patches/remove_ultralytics_telemetry.patch
+   patch -u -p1 -d .venv/lib/python3.1[23]/site-packages < patches/remove_ultralytics_telemetry.patch
    ```
    
    Compatibility fix for using mmengine (restoration model dependency) with latest PyTorch:
    ```bash
-   patch -u .venv/lib/python3.1[23]/site-packages/mmengine/runner/checkpoint.py  patches/fix_loading_mmengine_weights_on_torch26_and_higher.diff
+   patch -u -p1 -d .venv/lib/python3.1[23]/site-packages < patches/fix_loading_mmengine_weights_on_torch26_and_higher.diff
    ```
 
 7) Download model weights
    
    Download the models from the GitHub Releases page into the `model_weights` directory. The following commands do just that
    ```shell
-   wget -P model_weights/ 'https://github.com/ladaapp/lada/releases/download/v0.7.1/lada_mosaic_detection_model_v3.1_accurate.pt'
-   wget -P model_weights/ 'https://github.com/ladaapp/lada/releases/download/v0.7.1/lada_mosaic_detection_model_v3.1_fast.pt'
-   wget -P model_weights/ 'https://github.com/ladaapp/lada/releases/download/v0.2.0/lada_mosaic_detection_model_v2.pt'
-   wget -P model_weights/ 'https://github.com/ladaapp/lada/releases/download/v0.6.0/lada_mosaic_restoration_model_generic_v1.2.pth'
+   wget -P model_weights/ 'https://huggingface.co/ladaapp/lada/resolve/main/lada_mosaic_detection_model_v3.1_accurate.pt?download=true'
+   wget -P model_weights/ 'https://huggingface.co/ladaapp/lada/resolve/main/lada_mosaic_detection_model_v3.1_fast.pt?download=true'
+   wget -P model_weights/ 'https://huggingface.co/ladaapp/lada/resolve/main/lada_mosaic_detection_model_v2.pt?download=true'
+   wget -P model_weights/ 'https://huggingface.co/ladaapp/lada/resolve/main/lada_mosaic_restoration_model_generic_v1.2.pth?download=true'
    ```
 
    If you're interested in running DeepMosaics' restoration model you can also download their pretrained model `clean_youknow_video.pth`

@@ -1,13 +1,17 @@
+# SPDX-FileCopyrightText: Lada Authors
+# SPDX-License-Identifier: AGPL-3.0
+
 import json
 import os
 import re
 import subprocess
 from contextlib import contextmanager
 from fractions import Fraction
-from typing import Callable
+from typing import Callable, Iterator, Tuple, Optional, Union
 
 import av
 import cv2
+import torch
 import numpy as np
 
 from lada.lib import Image, Mask, VideoMetadata, os_utils
@@ -71,16 +75,22 @@ class VideoReader:
         self.container = None
 
     def __enter__(self):
-        self.container = av.open(self.file)
+        # We currently do not pass through metadata to the output file so let's just ignore potential errors. Fixes #127
+        # E.g. metadata could be encoded in CP936 instead of UTF-8 which would raise an error if we don't pass it in metadata_encoding.
+        # If we use it in the future we have to consider non-default character encodings.
+        self.container = av.open(self.file, metadata_errors='ignore')
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.container.close()
 
-    def frames(self):
+    def frames(self) -> Iterator[Tuple[torch.Tensor, int]]:
+        self.container.streams.video[0].thread_type = 'AUTO'
+        
         for frame in self.container.decode(video=0):
-            frame_img = frame.to_ndarray(format='bgr24')
-            yield frame_img, frame.pts
+            nd_frame = frame.to_ndarray(format='bgr24')
+            torch_frame = torch.from_numpy(nd_frame)
+            yield torch_frame, frame.pts
 
     def seek(self, offset_ns):
         offset = int((offset_ns / 1_000_000_000) * av.time_base)
@@ -97,7 +107,8 @@ def get_video_meta_data(path: str) -> VideoMetadata:
     json_video_format = json_output["format"]
 
     value = [int(num) for num in json_video_stream['avg_frame_rate'].split("/")]
-    average_fps = value[0]/value[1] if len(value) == 2 else value[0]
+    # Can be 0/0 for some files for ffprobe isn't able to determine the number of frames nb_frames
+    average_fps = value[0]/value[1] if len(value) == 2 and value[1] != 0 else value[0]
 
     value = [int(num) for num in json_video_stream['r_frame_rate'].split("/")]
     fps = value[0]/value[1] if len(value) == 2 else value[0]
@@ -290,6 +301,8 @@ class VideoWriter:
         self.release()
 
     def write(self, frame, frame_pts=None, bgr2rgb=False):
+        if isinstance(frame, torch.Tensor):
+            frame = frame.cpu().numpy()
         if bgr2rgb:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         out_frame = av.VideoFrame.from_ndarray(frame, format='rgb24')

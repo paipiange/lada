@@ -20,7 +20,7 @@ After opening a file, you can either watch the restored via in realtime or expor
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshot_gui_1_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="assets/screenshot_gui_1_light.png">
-  <img alt="Screenshot showing video preview" src="assets/screenshot_gui_1_dark.png" width="45%">
+  <img alt="Screenshot showing video preview" src="assets/screenshot_gui_1_dark.png" width="36%">
 </picture>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshot_gui_2_dark.png">
@@ -37,7 +37,7 @@ You can also use the command-line interface (CLI) to restore video(s):
 ```shell
 lada-cli --input <input video path>
 ```
-<img src="assets/screenshot_cli_1.png" alt="screenshot showing video export" width="45%">
+<img src="assets/screenshot_cli_1.png" alt="screenshot showing video export" width="60%">
 
 For more information about additional options, use the `--help` argument.
 
@@ -142,24 +142,34 @@ docker pull ladaapp/lada:latest
 > docker run --rm --gpus all --mount type=bind,src=<input video path>,dst=/mnt ladaapp/lada:latest --input "/mnt/<input video file>"
 > ```
 
+> [!TIP]
+> If you want to use hardware encoders like `hevc_nvenc` you have to provide the container with `video` capability.
+> 
+> With docker run you can use `--gpus 'all,"capabilities=compute,video"'`. Learn more [here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html).
+
 ### Using Windows
 
-For Windows users, the app (CLI and GUI) is packaged as a standalone .zip file.
+For Windows users, the app (CLI and GUI) is packaged as a standalone .7z archive file.
+You'll need [7-zip](https://7-zip.org/) to unpack the files. It is recommended to validate the file after downloading. See the Tip below.
 
-Get the latest release from the [Release Page](https://github.com/ladaapp/lada/releases).
-The .zip is available in the *Assets* section. You'll find ´lada.exe´ and ´lada-cli.exe´ after unzipping the archive.
+Get the latest release from the [Releases Page](https://codeberg.org/ladaapp/lada/releases).
+
+You'll find ´lada.exe´ and ´lada-cli.exe´ after extracting the archive.
 
 > [!NOTE]
-> The Docker image only works with x86_64 CPUs and Nvidia/CUDA GPUs (Turing or newer: RTX 20xx up to including RTX 50xx). Ensure your NVIDIA GPU driver is up-to-date.
+> The Windows release only works with x86_64 CPUs and Nvidia/CUDA GPUs (Turing or newer: RTX 20xx up to including RTX 50xx). Ensure your NVIDIA GPU driver is up-to-date.
 > It can also be used without a GPU but it will be very slow.
 
 > [!NOTE]
 > Be aware that the first start of lada.exe or lada-cli.exe could take a while before Windows Defender or your AV has scanned it. The next time you open the program it should start fast.
 
 > [!TIP]
-> Files on GitHub Releases are limited to 2GB each, so I had to split the file.
-> Download both files (´<version>.zip.001´ and ´<version>.zip.002´). Then open the first file in [7-zip](https://7-zip.org/).
-> You should then be able to see and extract the *lada* folder containing the .exe files and another subfolder with the dependencies of the application.
+> It is recommended to compare the checksum of the downloaded file against the value you'll find in the release announcement.
+> This makes sure that you got the correct and unaltered file, especially important if you got the file from an unofficial source.
+> 
+> Calculate the checksum of the downloaded file on your computer and compare it against the `SHA256` value you'll find in the release announcement. They must be the same!
+> 
+> You can do this with Powershell `Get-FileHash /path/to/file.7z` or [QuickHash-GUI](https://www.quickhash-gui.org/).
 
 ### Alternative Installation Methods
 
@@ -168,16 +178,33 @@ If the packages above don't work for you then you'll have to follow the [Build](
 Note that these instructions are mostly intended for developers to set up their environment to start working on the source code. But you should hopefully be able
 to follow the instructions even if you aren't a developer.
 
-All packages currently only work with Nvidia cards (or CPU) but there have been reports that following the Build instructions newer Intel Xe GPUs also work fine.
-AMD GPUs should potentially also work but probably not with Windows as PyTorch/ROCm builds are only available for Linux.
+All packages currently only work with Nvidia cards (or CPU) but there have been reports that, following the Build instructions, newer Intel Xe GPUs and AMD ROCm-compatible cards work as well.
 
 Reach out if you can support packaging the app for other operating systems or hardware.
 
+## Contribute
+
+You can find the Lada project [on GitHub](https://github.com/ladaapp/lada) and [on Codeberg](https://codeberg.org/ladaapp/lada).
+
+The home of the project is on Codeberg. GitHub is set up only as a mirror so it's code will stay in sync with the main branch on Codeberg.
+
+For contributing code, ideas or bug reports use [Pull requests](https://codeberg.org/ladaapp/lada/pulls) and the [Issue tracker](https://codeberg.org/ladaapp/lada/issues) on Codeberg.
+
+If you want to help translating the app you can contribute to existing translations or set up a new language over at [Codeberg Translate](https://translate.codeberg.org/projects/lada/lada/).
+
+New releases are published on both [GitHub Releases](https://github.com/ladaapp/lada/releases) and [Codeberg Releases](https://codeberg.org/ladaapp/lada/releases). You should get a notification about new releases if you star the project on either platform.
+
 ## Build
+
 If you want to start hacking on this project you'll need to install the app from source. Check out the detailed installation guides for [Linux](docs/linux_install.md) and [Windows](docs/windows_install.md).
 
 ## Training and dataset creation
+
 For instructions on training your own models and datasets, refer to [Training and dataset creation](docs/training_and_dataset_creation.md).
+
+## License
+
+Source code and models are licensed under AGPL-3.0. See the [LICENSE.md](LICENSE.md) file for full details.
 
 ## Acknowledgement
 This project builds upon work done by these fantastic individuals and projects:
@@ -190,4 +217,6 @@ This project builds upon work done by these fantastic individuals and projects:
 * [NudeNet](https://github.com/notAI-tech/NudeNet/): Used as an additional NSFW classifier to filter out false positives by our own NSFW segmentation model
 * [Twitter Emoji](https://github.com/twitter/twemoji): Provided eggplant emoji as base for the app icon.
 * [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN): Used their image degradation model design for our mosaic detection model degradation pipeline.
+* [BPJDet](https://github.com/hnuzhy/BPJDet): Model for detecting human body and head. Used for creating SFW mosaics so that mosaic detection model can be trained so skip such material. 
+* [CenterFace](https://github.com/Star-Clouds/CenterFace): Model for detecting human faces. Used for creating SFW mosaics so that mosaic detection model can be trained so skip such material. 
 * PyTorch, FFmpeg, GStreamer, GTK and [all other folks building our ecosystem](https://xkcd.com/2347/)

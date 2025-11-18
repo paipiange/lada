@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: Lada Authors
+# SPDX-License-Identifier: AGPL-3.0
+
+from dataclasses import dataclass
+from fractions import Fraction
+
 from gi.repository import Gtk, Adw, Gio
 
 from lada.gui.export.export_item_data import ExportItemDataProgress, ExportItemState
@@ -23,7 +29,7 @@ def get_video_metadata_string(file: Gio.File):
     return _("Duration: {duration}, Resolution: {resolution}, Frame rate: {fps} FPS").format(
         duration=_format_duration(meta_data.duration),
         resolution=f"{meta_data.video_width}x{meta_data.video_height}",
-        fps=f"{meta_data.video_fps:.2f}")
+        fps=f"{meta_data.video_fps_exact:.2f}")
 
 def open_error_dialog(parent: Gtk.Widget, filename:str, details:str|None):
     extra_child = None
@@ -95,7 +101,8 @@ def get_progressbar_text(state: ExportItemState, progress: ExportItemDataProgres
 class ProgressCalculator:
     def __init__(self, video_metadata: VideoMetadata):
         self.frame_processing_durations_buffer = []
-        self.progress: ExportItemDataProgress = ExportItemDataProgress()
+        self.time_done_s = 0
+        self.frames_done = 0
         self.video_metadata = video_metadata
         self.frame_processing_durations_buffer_min_len = min(video_metadata.frames_count - 1, int(video_metadata.video_fps * 15))
         self.frame_processing_durations_buffer_max_len = min(video_metadata.frames_count - 1, int(video_metadata.video_fps * 120))
@@ -107,15 +114,28 @@ class ProgressCalculator:
         if len(self.frame_processing_durations_buffer) >= self.frame_processing_durations_buffer_max_len:
             self.frame_processing_durations_buffer.pop(0)
         self.frame_processing_durations_buffer.append(duration)
-        self.progress.time_done_s += duration
-        self.progress.frames_done += 1
+        self.time_done_s += duration
+        self.frames_done += 1
 
-    def get_progress(self) -> float | None:
-        self.progress.fraction = self.progress.frames_done / self.video_metadata.frames_count
-        self.progress.frames_remaining = self.video_metadata.frames_count - self.progress.frames_done
-        self.progress.enough_datapoints =  len(self.frame_processing_durations_buffer) > self.frame_processing_durations_buffer_min_len
-        if self.progress.enough_datapoints:
+    def get_progress(self) -> ExportItemDataProgress:
+        progress = ExportItemDataProgress()
+        progress.time_done_s = self.time_done_s
+        progress.frames_done = self.frames_done
+        progress.fraction = progress.frames_done / self.video_metadata.frames_count
+        progress.frames_remaining = self.video_metadata.frames_count - progress.frames_done
+        progress.enough_datapoints =  len(self.frame_processing_durations_buffer) > self.frame_processing_durations_buffer_min_len
+        if progress.enough_datapoints:
             mean_duration = self._get_mean_processing_duration()
-            self.progress.time_remaining_s = self.progress.frames_remaining * mean_duration
-            self.progress.speed_fps = 1. / mean_duration
-        return self.progress
+            progress.time_remaining_s = progress.frames_remaining * mean_duration
+            progress.speed_fps = 1. / mean_duration
+        return progress
+
+@dataclass
+class ResumeInformation:
+    frame_pts: int
+    time_base: Fraction
+    frame_num : int
+
+    def get_resume_timestamp_ns(self):
+        SECOND = 1_000_000_000
+        return int((self.frame_pts * self.time_base) * SECOND)
